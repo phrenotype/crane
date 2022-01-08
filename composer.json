@@ -1,0 +1,26 @@
+{
+    "name": "crane/crane",
+    "description": "Crane - slim and secure",
+    "authors": [
+        {
+            "name": "Paul Robert",
+            "email": "paul.contrib@gmail.com"
+        }
+    ],
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "crane",
+        "php framework",
+        "crane framework"
+    ],
+    "require": {
+        "php" : ">=7.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Crane\\": "Crane/"
+        },
+        "files": []
+    }
+}
