@@ -59,7 +59,7 @@ class Request
     /**
      * Get data sent via $_POST as a generic object.
      * 
-     * @return array
+     * @return Crane
      */
     public function posted(): Crane
     {
@@ -68,7 +68,8 @@ class Request
 
     /**
      * Get data sent via $_COOKIE as a generic object.
-     * @return array
+     * 
+     * @return Crane
      */
     public function cookies(): Crane
     {
@@ -77,7 +78,8 @@ class Request
 
     /**
      * Get data sent via $_SESSION as a generic object.
-     * @return array
+     * 
+     * @return Crane
      */
     public function session(): Crane
     {
@@ -87,7 +89,7 @@ class Request
     /**
      * Get data sent via $_FILES as a generic object.
      * 
-     * @return array
+     * @return Crane
      */
     public function files(): Crane
     {
