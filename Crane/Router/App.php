@@ -3,22 +3,18 @@
 namespace Crane\Router;
 
 use Crane\Env;
+use Crane\FileSystem\Mime;
 use Crane\FileSystem\Storage;
-use Crane\Crane;
 use Crane\Router\Traits\CanHandleErrors;
 use Crane\Router\Traits\CanRespondHttp;
 use Crane\Router\Traits\HasMiddleware;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class App
 {
 
     use HasMiddleware, CanHandleErrors, CanRespondHttp;
-
-    const IMAGES = ['jpg', 'jpeg', 'png', 'gif'];
-    const VIDEOS = ['mp4'];
-    const TEXT = ['txt', 'html', 'json'];
-    const CSS = ['css'];
-    const SCRIPTS = ['js'];
 
     private $variables = [];
 
@@ -36,7 +32,7 @@ class App
         Env::load(Storage::root() . '.env');
         header_remove('X-Powered-By');
         ini_set('expose_php', 'off');
-        $this->request = Request::create($server, $request);
+        $this->request = Request::createFromGlobals();
     }
 
     public function __get($name)
@@ -102,19 +98,29 @@ class App
         return false;
     }
 
+    private function resolveMethod($function, $request, $response, $inMiddleware = false)
+    {
+        if (is_array($function)) {
+            $newFunction  = function ($req, $resp) use ($function) {
+                $f  = new $function[0];
+                return $f->{$function[1]}($req, $resp);
+            };
+            $this->pushResponse($newFunction($request, $response), $inMiddleware);
+        } else {
+            $this->pushResponse($function($request, $response), $inMiddleware);
+        }
+    }
+
     private function pushResponse($response, $inMiddleware = false)
     {
-        if (!$inMiddleware && !is_a($response, Response::class)) {
+        if (!$inMiddleware && !is_a($response, \Symfony\Component\HttpFoundation\Response::class)) {
             throw new \Error("Empty response from controller");
-        } else if ($inMiddleware && !is_a($response, Response::class)) {
+        } else if ($inMiddleware && !is_a($response, \Symfony\Component\HttpFoundation\Response::class)) {
             //If we are in a middleware and response object is null, just return
             return;
         }
-
-        foreach ($response->headers as $k => $v) {
-            header("$k: $v");
-        }
-        echo $response->body;
+        $response->send();
+        die;
     }
 
     private function runGlobalMiddleware($request, $response)
@@ -131,7 +137,7 @@ class App
     private function runLocalMiddleware($request, $response)
     {
         $m = array_filter($this->middleware, function ($mw) use ($request) {
-            return (($mw->path != null) && (preg_match('#^' . $mw->path . '$#', $request->http->path)));
+            return (($mw->path != null) && (preg_match('#^' . $mw->path . '$#', $request->server->get('REQUEST_URI'))));
         });
 
         foreach ($m as $index => $mw) {
@@ -167,54 +173,58 @@ class App
             return $cnt;
         }
 
-        //return $status;
+        //return $status;        
+    }
+
+    private function outputStream(string $filepath)
+    {
+        $mime = Mime::mime($filepath);
+        $response = new StreamedResponse(function () use ($filepath) {
+            ob_start();
+            $this->stream($filepath);
+            ob_end_flush();
+        }, 200, ['content-type' => $mime, 'X-FRAME-OPTIONS' => 'DENY']);
+
+        $response->send();
         die;
     }
 
-    private function decideStaticHeader($extension)
+    private function staticFileExists($request, $response)
     {
-        $contentType = 'text/html';
-        if (in_array($extension, self::CSS)) {
-            $contentType = 'text/css';
-        } else if (in_array($extension, self::TEXT)) {
-            $extension = 'text/' . $extension;
-        } else if (in_array($extension, self::IMAGES)) {
-            $contentType = 'image/' . $extension;
-        } else if (in_array($extension, self::VIDEOS)) {
-            $extension = 'video/' . $extension;
-        } else if (in_array($extension, self::SCRIPTS)) {
-            $contentType = 'text/javascript';
+
+        $path = ltrim($request->server->get('REQUEST_URI'), '/');
+
+        foreach ($this->statics as $pair) {
+            if (count($pair) === 2) {
+                if (preg_match("#^{$pair[0]}#", $path)) {
+                    $actualPath = str_replace($pair[0], $pair[1], $path);
+                    if (file_exists($actualPath)) {
+                        return $actualPath;
+                    }
+                }
+            } else if (count($pair) === 1) {
+                if (preg_match("#^{$pair[0]}#", $path)) {
+                    if (file_exists($path)) {
+                        return $path;
+                    }
+                }
+            }
         }
-        header('X-FRAME-OPTIONS: DENY');
-        header('Content-Type: ' . $contentType);
+        return false;
     }
 
     private function streamStatic($request, $response)
     {
-        $extensions = array_merge(self::CSS, self::TEXT, self::IMAGES, self::VIDEOS, self::SCRIPTS);
-        $pathExt = strtolower(pathinfo($request->http->url, PATHINFO_EXTENSION));
+        $path = ltrim($request->server->get('REQUEST_URI'), '/');
 
-        if (in_array($pathExt, $extensions)) {
-            $path = ltrim($request->http->path, '/');
+        // Anything with an extension is automatically eligible
+        if (preg_match("#\.\w+$#", $path)) {
 
-            foreach ($this->statics as $pair) {
-                if (count($pair) === 2) {
-                    if (preg_match("#^{$pair[0]}#", $path)) {
-                        $actualPath = str_replace($pair[0], $pair[1], $path);
-                        if (file_exists($actualPath)) {
-                            $this->decideStaticHeader($pathExt);
-                            $this->stream($actualPath);
-                        }
-                    }
-                } else if (count($pair) === 1) {
-                    if (preg_match("#^{$pair[0]}#", $path)) {
-                        if (file_exists($path)) {
-                            $this->decideStaticHeader($pathExt);
-                            $this->stream($path);
-                        }
-                    }
-                }
+            if ($filepath = $this->staticFileExists($request, $response)) {
+                $this->outputStream($filepath);
+                die;
             }
+
             die($this->doesNotExist($request, $response));
         }
     }
@@ -227,67 +237,44 @@ class App
         die;
     }
 
-    private function resolveMethod($function, $request, $response, $inMiddleware = false)
-    {
-        if (is_array($function)) {
-            $newFunction  = function ($req, $resp) use ($function) {
-                $f  = new $function[0];
-                return $f->{$function[1]}($req, $resp);
-            };
-            $this->pushResponse($newFunction($request, $response), $inMiddleware);
-        } else {
-            $this->pushResponse($function($request, $response), $inMiddleware);
-        }
-    }
-
     public function run(string $path)
     {
 
-        $args = [];
+
 
         $route = $this->matchRoute($path);
 
-        $request = new Request;
-        foreach ($this->request as $k => $v) {
-            if (!preg_match("#^/#", $k)) {
-                if (is_array($v)) {
-                    $v = new Crane($v);
+        $this->response = new Response();
+
+        if ($route || ($this->staticFileExists($this->request, $this->response))) {
+
+            $args = [];
+
+            if ($route) {
+                foreach ($route->matches as $p => $q) {
+                    (preg_match("#^[a-zA-Z_]+[\w]+$#", $p)) && ($args[$p] = $q);
                 }
-                $request->$k = $v;
             }
-        }
-        $request->params = new Crane([]);
 
+            $this->request->params = new ParameterBag([]);
 
-        $this->request = $request;
-
-
-        $response = new Response;
-        $this->response = $response;
-
-
-        $this->streamStatic($this->request, $response);
-
-        if ($route) {
-
-            foreach ($route->matches as $p => $q) {
-                (preg_match("#^[a-zA-Z_]+[\w]+$#", $p)) && ($args[$p] = $q);
-            }
             foreach ($args as $k => $v) {
-                $request->params->$k = $v;
+                $this->request->params->set($k, $v);
             }
 
+            $this->runGlobalMiddleware($this->request, $this->response);
+            $this->runLocalMiddleware($this->request, $this->response);
 
-            $this->runGlobalMiddleware($request, $response);
-            $this->runLocalMiddleware($request, $response);
+
+            $this->streamStatic($this->request, $this->response);
 
             $method = Route::GET;
-            $method = ($request->http->method === Route::POST) ? Route::POST : $method;
+            $method = ($this->request->server->get('REQUEST_METHOD') === Route::POST) ? Route::POST : $method;
 
             foreach ($route->handlers as $rh) {
                 if ($rh->method === Route::ALL) {
                     $function  = $rh->function;
-                    $this->resolveMethod($function, $request, $response);
+                    $this->resolveMethod($function, $this->request, $this->response);
                     die;
                 }
             }
@@ -295,14 +282,14 @@ class App
             foreach ($route->handlers as $rh) {
                 if ($method === $rh->method) {
                     $function  = $rh->function;
-                    $this->resolveMethod($function, $request, $response);
+                    $this->resolveMethod($function, $this->request, $this->response);
                     die;
                 }
             }
 
-            $this->doesNotExist($request, $response);
+            $this->doesNotExist($this->request, $this->response);
         } else {
-            $this->doesNotExist($request, $response);
+            $this->doesNotExist($this->request, $this->response);
         }
     }
 }

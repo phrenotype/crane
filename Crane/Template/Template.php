@@ -12,7 +12,7 @@ class Template
     {
         $this->file = $file;
         if (!file_exists($this->file)) {
-            throw new \Error(sprintf("'%s' does not exist.", $this->file));
+            throw new \Error(sprintf("The file '%s' does not exist.", $this->file));
         }
     }
 
