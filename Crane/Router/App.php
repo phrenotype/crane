@@ -230,10 +230,10 @@ class App
     }
 
     private function doesNotExist($request, $response)
-    {
-        $this->pushResponse((function ($req, $resp) {
-            return $resp->render("errors/404.php");
-        })($request, $response));
+    {        
+        $value = (new Template('errors/404.php'))->template($context);
+        $response = new Response($value, 404, ['content-type' => 'text/html', 'X-FRAME-OPTIONS' => 'DENY']);
+        $response->send();
         die;
     }
 

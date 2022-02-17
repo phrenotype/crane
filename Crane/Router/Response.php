@@ -7,6 +7,7 @@ use Crane\FileSystem\Storage;
 use Crane\Template\Template;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as HttpFoundationResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
@@ -72,6 +73,18 @@ class Response extends HttpFoundationResponse
      */
     public function json(array $data): HttpFoundationResponse
     {
-        return $response = new JsonResponse($data);
+        return new JsonResponse($data);
+    }
+
+    /**
+     * Redirect
+     * 
+     * @param string $url
+     * 
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function redirect(string $url): HttpFoundationResponse
+    {
+        return new RedirectResponse($url);
     }
 }
