@@ -12,7 +12,9 @@
     "keywords": [
         "crane",
         "php framework",
-        "crane framework"
+        "crane framework",
+        "minimalist",
+        "minimalist framework"
     ],
     "require": {
         "php" : ">=7.0.0",
