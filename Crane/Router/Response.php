@@ -95,10 +95,10 @@ class Response extends HttpFoundationResponse
      * @param string $key
      * @param mixed $value
      * 
-     * @return [type]
+     * @return null
      */
     public function session(string $key, mixed $value){
-        $_SERVER[$key] =  $value;
+        $_SESSION[$key] =  $value;
     }
 
     /**
