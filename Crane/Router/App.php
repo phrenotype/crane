@@ -8,6 +8,7 @@ use Crane\FileSystem\Storage;
 use Crane\Router\Traits\CanHandleErrors;
 use Crane\Router\Traits\CanRespondHttp;
 use Crane\Router\Traits\HasMiddleware;
+use Crane\Template\Template;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -229,9 +230,9 @@ class App
         }
     }
 
-    private function doesNotExist($request, $response)
-    {        
-        $value = (new Template('errors/404.php'))->template($context);
+    private function doesNotExist(Request $request, Response $response)
+    {
+        $value = (new Template('views/errors/404.php'))->template([]);
         $response = new Response($value, 404, ['content-type' => 'text/html', 'X-FRAME-OPTIONS' => 'DENY']);
         $response->send();
         die;

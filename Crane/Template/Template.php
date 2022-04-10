@@ -29,7 +29,7 @@ class Template
 
         return $partial;
         /*
-           * Maybe a future feature where templates can extend beyond first generation
+           * Maybe a  feature where templates can extend beyond first generation
             $extends_regex = "(?s)\{\{\s*?extends\s*?([^\s]+?)\s*?}}";
     
             return preg_match("#$extends_regex#", $r, $matches) ?
