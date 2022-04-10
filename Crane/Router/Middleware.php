@@ -9,9 +9,11 @@ class Middleware
 
     public function __construct(string $path = null, $handler)
     {
-        if(!is_array($handler) && !is_callable($handler)){
-            throw new \Error("Middleware handler must be a callable.");
+
+        if (!is_array($handler) && !is_callable($handler) && (!class_exists($handler) && !is_callable(new $handler))) {
+            throw new \Error("Middleware handler must be a callable or invokable object.");
         }
+
         $this->path = $path;
         $this->handler = $handler;
     }
