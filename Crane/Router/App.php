@@ -292,7 +292,7 @@ class App
             }
 
             $this->doesNotExist($this->request, $this->response);
-        } else {
+        } else {            
             $this->doesNotExist($this->request, $this->response);
         }
     }

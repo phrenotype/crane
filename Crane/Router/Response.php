@@ -24,7 +24,7 @@ class Response extends HttpFoundationResponse
     public function respond(string $html): HttpFoundationResponse
     {                
         $response = new HttpFoundationResponse($html, 200, ['content-type' => 'text/html', 'X-FRAME-OPTIONS' => 'DENY']);
-        return $response;
+        return $response->send();
     }    
 
     /**
@@ -42,7 +42,7 @@ class Response extends HttpFoundationResponse
         $value = (new Template($fp))->template($context);
         $response = new HttpFoundationResponse($value, 200, ['content-type' => 'text/html', 'X-FRAME-OPTIONS' => 'DENY']);
 
-        return $response;
+        return $response->send();
     }
 
     /**
@@ -60,7 +60,7 @@ class Response extends HttpFoundationResponse
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
             basename($file)
         );
-        return $response;
+        return $response->send();
     }
 
 
@@ -73,7 +73,7 @@ class Response extends HttpFoundationResponse
      */
     public function json(array $data): HttpFoundationResponse
     {
-        return new JsonResponse($data);
+        return (new JsonResponse($data))->send();
     }
 
     /**
@@ -85,7 +85,7 @@ class Response extends HttpFoundationResponse
      */
     public function redirect(string $url): HttpFoundationResponse
     {
-        return new RedirectResponse($url);
+        return (new RedirectResponse($url))->send();
     }
 
 
