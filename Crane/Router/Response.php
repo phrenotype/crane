@@ -22,10 +22,10 @@ class Response extends HttpFoundationResponse
      * @return Symfony\Component\HttpFoundation\Response
      */
     public function respond(string $html): HttpFoundationResponse
-    {                
+    {
         $response = new HttpFoundationResponse($html, 200, ['content-type' => 'text/html', 'X-FRAME-OPTIONS' => 'DENY']);
         return $response->send();
-    }    
+    }
 
     /**
      * Render a template.
@@ -97,7 +97,8 @@ class Response extends HttpFoundationResponse
      * 
      * @return null
      */
-    public function session(string $key, mixed $value){
+    public function session(string $key, mixed $value)
+    {
         $_SESSION[$key] =  $value;
     }
 
@@ -114,7 +115,8 @@ class Response extends HttpFoundationResponse
      * 
      * @return bool
      */
-    public function cookie(string $name, string $value="", mixed $expires_or_options = 0, string $path="", string $domain="", bool $secure = false, bool $httponly = false) : bool{
+    public function cookie(string $name, string $value = "", mixed $expires_or_options = 0, string $path = "", string $domain = "", bool $secure = false, bool $httponly = false): bool
+    {
         return setcookie($name, $value, $expires_or_options, $path, $domain, $secure, $httponly);
     }
 }
