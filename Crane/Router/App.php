@@ -107,7 +107,7 @@ class App
                 return $f->{$function[1]}($req, $resp);
             };
             $this->pushResponse($newFunction($request, $response), $inMiddleware);
-        } else if (class_exists($function)) {
+        } else if (is_string($function) && class_exists($function)) {
             $obj = new $function;
             $this->pushResponse($obj($request, $response), $inMiddleware);
         } else if (is_callable($function)) {
