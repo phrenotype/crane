@@ -46,10 +46,13 @@ class App
         $this->variables[$name] = $value;
     }
 
-    public function startSession($name = null)
+    public function startSession($name = null, $params = ['lifetime' => 604800, 'path' => '/', 'secure' => false, 'httponly' => false])
     {
         if (session_status() == PHP_SESSION_NONE) {
+            //1 week
             session_name($name);
+            ini_set('session.gc_maxlifetime', 604800);
+            session_set_cookie_params($params);
             session_start();
         } else {
             session_regenerate_id();
@@ -292,7 +295,7 @@ class App
             }
 
             $this->doesNotExist($this->request, $this->response);
-        } else {            
+        } else {
             $this->doesNotExist($this->request, $this->response);
         }
     }

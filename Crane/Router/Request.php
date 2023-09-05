@@ -6,7 +6,8 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class Request extends HttpFoundationRequest
 {
-
+    public $params = [];
+    
     /**
      * Get a session value.
      * 

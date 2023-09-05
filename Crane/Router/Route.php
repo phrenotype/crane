@@ -14,6 +14,8 @@ class Route
     public $path;
     public $handlers = [];
 
+    public $matches = [];
+
     public function __construct($path)
     {
         $this->path = $path;
