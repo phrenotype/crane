@@ -30,7 +30,7 @@ class App
 
     public function __construct(array $request, array $server)
     {
-        Env::load(Storage::root() . '.env');
+        Env::load(Storage::root() . 'config.php');
         header_remove('X-Powered-By');
         ini_set('expose_php', 'off');
         $this->request = Request::createFromGlobals();
