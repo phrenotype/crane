@@ -309,17 +309,6 @@ Include other templates:
 {% include 'header.html' %}
 ```
 
-### Template Class
-
-You can also use the Template class directly:
-
-```php
-use Crane\Template\Template;
-
-$template = new Template('views/profile.html');
-$content = $template->template(['user' => $user]);
-```
-
 ## Sessions
 
 Crane handles sessions using PHP's built-in session management.
@@ -416,8 +405,5 @@ $cookies = $request->cookie();
 ```
 
 
-
-
-
 ## Contact  
-**Email** : paul.contrib@gmail.com
+**Email** : paul@paulrobert.net
