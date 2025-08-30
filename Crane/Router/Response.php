@@ -55,11 +55,6 @@ class Response extends HttpFoundationResponse
     public function download($file): HttpFoundationResponse
     {
         $response = new BinaryFileResponse($file);
-        $response->headers->set('Content-Type', Mime::mime($file));
-        $response->setContentDisposition(
-            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            basename($file)
-        );
         return $response;
     }
 
